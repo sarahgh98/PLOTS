@@ -1,0 +1,26 @@
+SPEARMAN CORRELATION TEST NONPARAMETRIC/ BRUCITE
+
+# Convert target_variable to numeric and handle missing values
+target_variable <- as.numeric(as.character(eps$Brucite))
+target_variable <- target_variable[!is.na(target_variable)]
+
+# Convert other_variables to numeric and handle missing values
+other_variables <- eps[, c(7,17,18,19,22,23,25,26,27,29,33,37,39,40,42,45,46,47,51,52,56,57,59,61,62,64,65,66,67,69,71,73,74,75,76,77,78,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97, 98,99,101,102,103,104,105,106,107,108,109,110,111,112,113,114)]
+other_variables <- apply(other_variables, 2, function(x) as.numeric(as.character(x)))
+other_variables <- na.omit(other_variables)
+
+# Create an empty table to store the results
+result_table <- data.frame(Variable = colnames(other_variables),
+                           Correlation = numeric(ncol(other_variables)),
+                           P_Value = numeric(ncol(other_variables)),
+                           stringsAsFactors = FALSE)
+
+# Calculate correlations and p-values
+for (i in 1:ncol(other_variables)) {
+  result <- cor.test(target_variable, other_variables[, i], method = "spearman")
+  result_table[i, "Correlation"] <- result$estimate
+  result_table[i, "P_Value"] <- result$p.value
+}
+
+# Print the result table
+print(result_table)
