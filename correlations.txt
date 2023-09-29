@@ -1,0 +1,651 @@
+SHAPIRO FOR INDIVIDUAL VQARIABLE
+View(eps)
+shapiro.test(eps$K07257)
+
+------------------------------------------------------------
+
+SINGLE VARIABLES SPEARMAN
+# Example data
+x <- try$brucite
+y <- try$K19428
+
+# Perform Spearman correlation test
+result <- cor.test(x, y, method = "spearman")
+
+# Print the correlation coefficient and p-value
+print(result)
+-------------------------------------------------------
+PEARSON SINGLE VQRIABLE
+
+# Example data
+x <- eps$Brucite
+y <- eps$K07257
+
+# Perform Pearson correlation test
+result <- cor.test(x, y, method = "pearson")
+
+# Print the result
+print(result)
+
+--------------------------------------------------------------
+NORMALITY TEST DO MANY SHAPIRO TEST ALL AT ONCE 
+
+selected_columns <- eps[, c(2, 3, 7:114)]
+shapiro_results <- lapply(selected_columns, shapiro.test)
+print(shapiro_results)
+---------------------------------------------------------------------------------
+DO SHAPIRO TEST AND CREATE A TABLE SPECIFYING THE NORMAL AND NOT NORMAL VARIABLES
+
+# Assuming you already read the dataset 'eps' from CSV and selected the columns
+selected_columns <- eps[, c(2, 3, 7:114)]
+
+# Initialize empty lists to store the results
+column_names <- character()
+test_statistics <- numeric()
+p_values <- numeric()
+normality <- character()
+
+# Perform the Shapiro-Wilk test for selected columns and store the results
+for (i in seq_along(selected_columns)) {
+  column_name <- colnames(selected_columns)[i]
+  test_result <- shapiro.test(selected_columns[[i]])
+  
+  column_names <- c(column_names, column_name)
+  test_statistics <- c(test_statistics, test_result$statistic)
+  p_values <- c(p_values, test_result$p.value)
+  normality <- c(normality, ifelse(test_result$p.value >= 0.05, "Normal", "Not Normal"))
+}
+
+# Create a data frame with the results
+shapiro_results_table <- data.frame(
+  Variable = column_names,
+  Test_Statistic = test_statistics,
+  P_Value = p_values,
+  Normality = normality
+)
+
+# Print the table
+print(shapiro_results_table)
+
+-------------------------------------------------------------------
+EXPORT TABLE INTO EXCEL SHEET
+# Install and load the openxlsx package
+install.packages("openxlsx")
+library(openxlsx)
+
+# Specify the file path for the Excel file
+file_path <- "C:/Users/Sarah/OneDrive - Universidad Icesi (@icesi.edu.co)/Escritorio"
+
+# Write the table to the Excel file
+write.xlsx(shapiro_results_table, file_path, rowNames = FALSE)
+
+# Message indicating successful export
+cat("Table exported to Excel:", file_path, "\n")
+
+------------------------------------------------------------
+EXTRACT THE SIGNIFICANT VARIABLES AND CREATE SCATTERED PLOTS	
+
+library(ggplot2)
+
+# Filter the result_table based on p-value threshold
+significant_vars <- result_table[result_table$P_Value < 0.05, ]
+
+# Create scatter plots for significant variables
+scatter_plots <- lapply(seq_len(nrow(significant_vars)), function(i) {
+  var_name <- as.character(significant_vars[i, "Variable"])
+  cor_value <- significant_vars[i, "Correlation"]
+  
+  # Create scatter plot with regression line
+  p <- ggplot(try, aes_string(x = var_name, y = "brucite")) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(title = paste("Correlation:", round(cor_value, 2)), 
+         x = var_name, y = "brucite") +
+    theme_minimal()
+  
+  p
+})
+
+# Display scatter plots
+gridExtra::grid.arrange(grobs = scatter_plots, ncol = 2)
+---------------------------------------------------------------------
+PEARSON CORRELATION BRUCITE 
+
+target_variable <- eps$Brucite
+other_variables <- eps[, c(8,9,10, 11,12,13,14,15,16,20,21,24,28,30,31,32,34,35,36,38,41,43,44,48,49,50,53,54,55,58,60,63,68,70,72,79,100)]
+cor_matrix <- cor(target_variable, other_variables)
+
+
+
+cor_results <- apply(other_variables, 2, function(x) cor.test(target_variable, x))
+#This code uses the apply function to iterate over each column of other_variables (specified by 2) and perform a correlation test between the target variable and each column. The cor.test function is used to calculate the correlation coefficient and p-value for each pair of variables. The results are stored in the cor_results list.
+
+cor_table <- data.frame(Variable = colnames(other_variables),
+                        Correlation = sapply(cor_results, function(x) x$estimate),
+                        p_value = sapply(cor_results, function(x) x$p.value))
+
+##Variable = colnames(other_variables): This line creates a column named "Variable" in the cor_table dataframe. It uses the colnames() function to extract the column names from the other_variables dataframe and assign them to the "Variable" column.
+
+##Correlation = sapply(cor_results, function(x) x$estimate): This line creates a column named "Correlation" in the cor_table dataframe. It uses the sapply() function to iterate over the cor_results list and extract the correlation coefficients (estimate) from each cor.test result. The correlation coefficients are assigned to the "Correlation" column.
+
+##p_value = sapply(cor_results, function(x) x$p.value): This line creates a column named "p_value" in the cor_table dataframe. Similar to the previous line, it uses sapply() to iterate over the cor_results list and extract the p-values (p.value) from each cor.test result. The p-values are assigned to the "p_value" column.
+
+
+print(cor_table)
+
+---------------------------------------------------------------------------
+PEARSON_BRUCITE_plot
+
+library(ggplot2)
+library(gridExtra)
+
+# Filter the cor_table based on p-value threshold
+significant_vars <- cor_table[cor_table$p_value < 0.05, ]
+
+# Define custom x-axis labels for each scatter plot
+custom_labels <- c("Gellan/Welan/Diutan/S-7/S-88 (K00973)","Hyaluronic Acid (K04042)","Alginate (K19294)","Hyaluronic Acid (K12536)","Colanic Acid (K13620)")  # Add custom labels as needed
+
+# Create scatter plots for significant variables with custom x-axis labels
+scatter_plots <- lapply(seq_len(nrow(significant_vars)), function(i) {
+  var_name <- as.character(significant_vars[i, "Variable"])
+  cor_value <- significant_vars[i, "Correlation"]
+  p_value <- significant_vars[i, "p_value"]
+  
+  # Create scatter plot with regression line
+  p <- ggplot(data = eps, aes_string(x = var_name, y = "Brucite")) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(title = sprintf("Correlation: %.2f, p-value: %.4f", cor_value, p_value),
+         x = var_name, y = "Brucite") +
+    theme_minimal()
+  
+  p + xlab(custom_labels[i])  # Add custom x-axis labels
+})
+
+# Display scatter plots
+do.call(grid.arrange, c(scatter_plots, ncol = 2))
+
+
+------------------------------------------------------------------------
+SPEARMAN CORRELATION TEST NONPARAMETRIC/ BRUCITE
+
+# Convert target_variable to numeric and handle missing values
+target_variable <- as.numeric(as.character(eps$Brucite))
+target_variable <- target_variable[!is.na(target_variable)]
+
+# Convert other_variables to numeric and handle missing values
+other_variables <- eps[, c(7,17,18,19,22,23,25,26,27,29,33,37,39,40,42,45,46,47,51,52,56,57,59,61,62,64,65,66,67,69,71,73,74,75,76,77,78,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97, 98,99,101,102,103,104,105,106,107,108,109,110,111,112,113,114)]
+other_variables <- apply(other_variables, 2, function(x) as.numeric(as.character(x)))
+other_variables <- na.omit(other_variables)
+
+# Create an empty table to store the results
+result_table <- data.frame(Variable = colnames(other_variables),
+                           Correlation = numeric(ncol(other_variables)),
+                           P_Value = numeric(ncol(other_variables)),
+                           stringsAsFactors = FALSE)
+
+# Calculate correlations and p-values
+for (i in 1:ncol(other_variables)) {
+  result <- cor.test(target_variable, other_variables[, i], method = "spearman")
+  result_table[i, "Correlation"] <- result$estimate
+  result_table[i, "P_Value"] <- result$p.value
+}
+
+# Print the result table
+print(result_table)
+-------------------------------------------------------------------------------------------------
+PLOT FOR BRUCITE SPEARMAN
+
+library(ggplot2)
+
+# Filter the result_table based on p-value threshold
+significant_vars <- result_table[result_table$P_Value < 0.05, ]
+
+# Define custom X-axis labels
+custom_labels <- c("Poly-N-acetylglucosamine (K19428)", "Hyaluronic acid (K13810)", "Poly-N-acetylglucosamine (K19430)","Psl (K21000)", "Hyaluronic acid (K12537)","Poly-N-acetylglucosamine (K11937)", "Colanic Acid(K13684)","S-7 (K13328)")  # Add the desired labels
+
+# Create scatter plots for significant variables
+scatter_plots <- lapply(seq_len(nrow(significant_vars)), function(i) {
+  var_name <- as.character(significant_vars[i, "Variable"])
+  cor_value <- significant_vars[i, "Correlation"]
+  p_value <- significant_vars[i, "P_Value"]
+  
+  # Create scatter plot with regression line
+  p <- ggplot(eps, aes_string(x = var_name, y = "Brucite")) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(title = sprintf("Correlation: %.2f, p-value: %.4f", cor_value, p_value), 
+         x = custom_labels[i], y = "Brucite") +
+    xlab(custom_labels[i]) +  # Change the x-axis label
+    theme_minimal()
+  
+  p
+})
+
+# Display scatter plots
+gridExtra::grid.arrange(grobs = scatter_plots, ncol = 2)
+----------------------------------------------------------------------------------------------------------------------
+ARAGONITE_SPEARMAN
+
+# Convert target_variable to numeric and handle missing values
+target_variable <- as.numeric(as.character(eps$Aragonite))
+target_variable <- target_variable[!is.na(target_variable)]
+
+# Convert other_variables to numeric and handle missing values
+other_variables <- eps[, c(7:115)]
+other_variables <- apply(other_variables, 2, function(x) as.numeric(as.character(x)))
+other_variables <- na.omit(other_variables)
+
+# Create an empty table to store the results
+result_table <- data.frame(Variable = colnames(other_variables),
+                           Correlation = numeric(ncol(other_variables)),
+                           P_Value = numeric(ncol(other_variables)),
+                           stringsAsFactors = FALSE)
+
+# Calculate correlations and p-values
+for (i in 1:ncol(other_variables)) {
+  result <- cor.test(target_variable, other_variables[, i], method = "spearman")
+  result_table[i, "Correlation"] <- result$estimate
+  result_table[i, "P_Value"] <- result$p.value
+}
+
+# Print the result table
+print(result_table)
+
+
+---------------------------------------------------------
+ARAGONITE PLOT 
+
+library(ggplot2)
+
+ # Filter the result_table based on p-value threshold
+ significant_vars <- result_table[result_table$P_Value < 0.05, ]
+ 
+ # Define custom X-axis labels
+ custom_labels <- c("Gellan/Welan/Diutan/S-7/S88 (K01710)", " Gellan/Welan/Diutan/S-7/S88 (K00973)", "Hyaluronic acid (K04042)", "Poly-N-acetylglucosamine (PNAG) (K19428)", "Alginate (K07735)", "Salecan (K01449)","Poly-N-acetylglucosamine (K19430)", "Hyaluronic acid(K12537)","Colanic Acid (K13684)", "S-7(K13328)", "Colanic Acid (K13620)")  # Add the desired labels
+ 
+ # Create scatter plots for significant variables
+ scatter_plots <- lapply(seq_len(nrow(significant_vars)), function(i) {
+ var_name <- as.character(significant_vars[i, "Variable"])
+     cor_value <- significant_vars[i, "Correlation"]
+     p_value <- significant_vars[i, "P_Value"]
+     
+     # Create scatter plot with regression line
+     p <- ggplot(eps, aes_string(x = var_name, y = "Aragonite")) +
+         geom_point() +
+         geom_smooth(method = "lm", se = FALSE, color = "red") +
+         labs(title = sprintf("Correlation: %.2f, p-value: %.4f", cor_value, p_value), 
+              x = custom_labels[i], y = "Aragonite") +
+         xlab(custom_labels[i]) +  # Change the x-axis label
+         theme_minimal()
+     
+     p
+ })
+ 
+ # Display scatter plots
+ gridExtra::grid.arrange(grobs = scatter_plots, ncol = 2)
+
+-------------------------------------------------------------------------------------------------------------------
+                                                                             PHA ANALYSIS 
+
+CONVERT ALL THE VARIABLES IN NUMERIC FORMAT
+
+library(readxl)
+
+# Read Excel sheet into a dataframe
+data <- read_excel("path/to/your/file.xlsx", sheet = "Sheet1")
+
+# Convert each column to numeric format and assign back to pha dataframe
+pha <- data.frame(lapply(data, as.numeric))
+-----------------------------------------------------------------------------------------------------
+PEARSON BRUCITE_PHA DATA
+
+# Extract the target variable from column 2
+target_variable <- as.numeric(pha[[2]])
+
+# Extract the other variables from the specified columns and convert to numeric
+other_variables <- as.data.frame(sapply(pha[, c(5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 19, 20, 21, 23, 24, 25, 26, 27, 29, 30, 31, 33, 35, 36, 39, 41, 45, 46, 48, 49, 51, 52, 55, 59, 60, 61)], as.numeric))
+
+# Create an empty data frame to store the correlation results
+cor_table <- data.frame(Variable = character(),
+                        Correlation = numeric(),
+                        p_value = numeric(),
+                        stringsAsFactors = FALSE)
+
+# Perform the correlations
+for (col in 1:ncol(other_variables)) 
+{  cor_test <- cor.test(target_variable, other_variables[[col]])
+  cor_table <- rbind(cor_table, data.frame(
+Variable = colnames(other_variables)[col],
+               Correlation = cor_test$estimate,
+                                           p_value = cor_test$p.value,
+                                           stringsAsFactors = FALSE))}
+
+# Print the correlation table
+print(cor_table)
+
+#1:ncol(other_variables) creates a sequence of numbers from 1 to the number of columns. This sequence represents the column indices of the other_variables data frame.
+#col is a loop variable that takes the values from the generated sequence in each iteration.
+--------------------------------------------------------------------------------------------------------------------------------------
+PLOT PHA _BRUCITE_PEARSON
+library(ggplot2)
+library(gridExtra)
+
+# Filter the cor_table based on p-value threshold
+significant_vars <- cor_table[cor_table$p_value < 0.05, ]
+
+# Define custom x-axis labels for each scatter plot
+custom_labels <- c(" fadD(K01897)","accC (K01961)","fadE (K06445)","ldh (K00016)","phbB (K00023)","tesA(K10804)","fadD19(K18688)")  # Add custom labels as needed
+
+# Create scatter plots for significant variables with custom x-axis labels
+scatter_plots <- lapply(seq_len(nrow(significant_vars)), function(i) {
+  var_name <- as.character(significant_vars[i, "Variable"])
+  cor_value <- significant_vars[i, "Correlation"]
+  p_value <- significant_vars[i, "p_value"]
+  
+  # Create scatter plot with regression line
+  p <- ggplot(data = pha, aes_string(x = var_name, y = "Brucite")) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(title = sprintf("Correlation: %.2f, p-value: %.4f", cor_value, p_value),
+         x = var_name, y = "brucite") +
+    theme_minimal()
+  
+  p + xlab(custom_labels[i])  # Add custom x-axis labels
+})
+
+# Display scatter plots
+do.call(grid.arrange, c(scatter_plots, ncol = 2))
+----------------------------------------------------------------------------------------------------
+PHA_SPEARMAN_BRUCITE
+
+# Convert target_variable to numeric and handle missing values
+target_variable <- as.numeric(as.character(pha$Brucite))
+target_variable <- target_variable[!is.na(target_variable)]
+
+# Convert other_variables to numeric and handle missing values
+other_variables <- pha[, c(3,4,6,12,18,22,28,32,34,37,38,40,42,43,44,47,50,53,54,56,57,58,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83)]
+other_variables <- apply(other_variables, 2, function(x) as.numeric(as.character(x)))
+other_variables <- na.omit(other_variables)
+
+# Create an empty table to store the results
+result_table <- data.frame(Variable = colnames(other_variables),
+                           Correlation = numeric(ncol(other_variables)),
+                           P_Value = numeric(ncol(other_variables)),
+                           stringsAsFactors = FALSE)
+
+# Calculate correlations and p-values
+for (i in 1:ncol(other_variables)) {
+  result <- cor.test(target_variable, other_variables[, i], method = "spearman")
+  result_table[i, "Correlation"] <- result$estimate
+  result_table[i, "P_Value"] <- result$p.value
+}
+
+# Print the result table
+print(result_table)
+------------------------------------------------------
+PLOTTTT PHA SPEARMAN BRUCITE 
+library(ggplot2)
+
+# Filter the result_table based on p-value threshold
+significant_vars <- result_table[result_table$P_Value < 0.05, ]
+
+# Define custom X-axis labels
+custom_labels <- c("paaF (K01692)", "tesB (K10805)", "FabK (K02371)", "fadD3(K18687)","bdh(K00019)", "FabL(K10780)", "fadK(K12507)","chnD(K19961)")  # Add the desired labels
+
+# Create scatter plots for significant variables
+scatter_plots <- lapply(seq_len(nrow(significant_vars)), function(i) {
+  var_name <- as.character(significant_vars[i, "Variable"])
+  cor_value <- significant_vars[i, "Correlation"]
+  p_value <- significant_vars[i, "P_Value"]
+  
+  # Create scatter plot with regression line
+  p <- ggplot(pha, aes_string(x = var_name, y = "Brucite")) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(title = sprintf("Correlation: %.2f, p-value: %.4f", cor_value, p_value), 
+         x = custom_labels[i], y = "Brucite") +
+    xlab(custom_labels[i]) +  # Change the x-axis label
+    theme_minimal()
+  
+  p
+})
+
+# Display scatter plots
+gridExtra::grid.arrange(grobs = scatter_plots, ncol = 2)
+
+-----------------------------------------------------------------------
+# Variables a analizar TEST RAPIDO 
+variable1 <- c(78,51,49,34,54,6,71,4,59,24,63,61,52,0,32,12)
+variable2 <- c(9.24225, 39.7385, 38.0439, 37.563,11.7092,23.7743,14.4666,15.3756,4.07318,9.10644,9.99993,13.9773,10.9125,85.0743,32.1678,19.7277)
+
+
+# Realizar la prueba de correlación de Spearman
+result <- cor.test(variable1, variable2, method = "spearman")
+
+# Imprimir el coeficiente de correlación y el valor p
+print(result)
+-----------------------------------------------------------------
+PHA ARAGONITE_SPEARMAN
+
+# Convert target_variable to numeric and handle missing values
+target_variable <- as.numeric(as.character(pha$Aragonite))
+target_variable <- target_variable[!is.na(target_variable)]
+
+# Convert other_variables to numeric and handle missing values
+other_variables <- pha[, c(3:83)]
+other_variables <- apply(other_variables, 2, function(x) as.numeric(as.character(x)))
+other_variables <- na.omit(other_variables)
+
+# Create an empty table to store the results
+result_table <- data.frame(Variable = colnames(other_variables),
+                           Correlation = numeric(ncol(other_variables)),
+                           P_Value = numeric(ncol(other_variables)),
+                           stringsAsFactors = FALSE)
+
+# Calculate correlations and p-values
+for (i in 1:ncol(other_variables)) {
+  result <- cor.test(target_variable, other_variables[, i], method = "spearman")
+  result_table[i, "Correlation"] <- result$estimate
+  result_table[i, "P_Value"] <- result$p.value
+}
+
+# Print the result table
+print(result_table)
+----------------------------------------------------------------------
+PLOT PHA ARAGONITE SPEARMAN
+
+library(ggplot2)
+
+# Filter the result_table based on p-value threshold
+significant_vars <- result_table[result_table$P_Value < 0.05, ]
+
+# Define custom X-axis labels
+custom_labels <- c("fadD (K01897)", "tesB (K10805)", "ldh (K00016)", "FabK(K02371)","phbB (K00023)", "accA(K01962)", "chnC(K14731)","tesA(K10804)", "FabB2(K03921)","FabV(K00209)","fadR(K13770)","chnD(K19961)")  # Add the desired labels
+
+# Create scatter plots for significant variables
+scatter_plots <- lapply(seq_len(nrow(significant_vars)), function(i) {
+  var_name <- as.character(significant_vars[i, "Variable"])
+  cor_value <- significant_vars[i, "Correlation"]
+  p_value <- significant_vars[i, "P_Value"]
+  
+  # Create scatter plot with regression line
+  p <- ggplot(pha, aes_string(x = var_name, y = "Aragonite")) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "red") +
+    labs(title = sprintf("Correlation: %.2f, p-value: %.4f", cor_value, p_value), 
+         x = custom_labels[i], y = "Aragonite") +
+    xlab(custom_labels[i]) +  # Change the x-axis label
+    theme_minimal()
+  
+  p
+})
+
+# Display scatter plots
+gridExtra::grid.arrange(grobs = scatter_plots, ncol = 2)
+
+
+
+-----------------------------
+NEW VARIABLES INCLUDED
+
+DO SHAPIRO TEST AND CREATE A TABLE SPECIFYING THE NORMAL AND NOT NORMAL VARIABLES
+
+# Assuming you already read the dataset 'eps' from CSV and selected the columns
+selected_columns <- eps[, c(116:125)]
+
+# Initialize empty lists to store the results
+column_names <- character()
+test_statistics <- numeric()
+p_values <- numeric()
+normality <- character()
+
+# Perform the Shapiro-Wilk test for selected columns and store the results
+for (i in seq_along(selected_columns)) {
+  column_name <- colnames(selected_columns)[i]
+  test_result <- shapiro.test(selected_columns[[i]])
+  
+  column_names <- c(column_names, column_name)
+  test_statistics <- c(test_statistics, test_result$statistic)
+  p_values <- c(p_values, test_result$p.value)
+  normality <- c(normality, ifelse(test_result$p.value >= 0.05, "Normal", "Not Normal"))
+}
+
+# Create a data frame with the results
+shapiro_results_table <- data.frame(
+  Variable = column_names,
+  Test_Statistic = test_statistics,
+  P_Value = p_values,
+  Normality = normality
+)
+
+# Print the table
+print(shapiro_results_table)
+
+----------------------------------------------
+EXPORT TABLE INTO EXCEL SHEET
+# Install and load the openxlsx package
+
+library(openxlsx)
+
+# Specify the file path for the Excel file
+file_path <- "C:/Users/Sarah/OneDrive - Universidad Icesi (@icesi.edu.co)/Escritorio"
+
+# Write the table to the Excel file
+write.xlsx(shapiro_results_table, file_path, rowNames = FALSE)
+
+# Message indicating successful export
+cat("Table exported to Excel:", file_path, "\n")
+--------------------------------------------------------
+PEARSON CORRELATION BRUCITE 
+
+target_variable <- eps$Brucite
+other_variables <- eps[, c(116,117,121,123,125)]
+cor_matrix <- cor(target_variable, other_variables)
+
+
+
+cor_results <- apply(other_variables, 2, function(x) cor.test(target_variable, x))
+#This code uses the apply function to iterate over each column of other_variables (specified by 2) and perform a correlation test between the target variable and each column. The cor.test function is used to calculate the correlation coefficient and p-value for each pair of variables. The results are stored in the cor_results list.
+
+cor_table <- data.frame(Variable = colnames(other_variables),
+                        Correlation = sapply(cor_results, function(x) x$estimate),
+                        p_value = sapply(cor_results, function(x) x$p.value))
+
+##Variable = colnames(other_variables): This line creates a column named "Variable" in the cor_table dataframe. It uses the colnames() function to extract the column names from the other_variables dataframe and assign them to the "Variable" column.
+
+##Correlation = sapply(cor_results, function(x) x$estimate): This line creates a column named "Correlation" in the cor_table dataframe. It uses the sapply() function to iterate over the cor_results list and extract the correlation coefficients (estimate) from each cor.test result. The correlation coefficients are assigned to the "Correlation" column.
+
+##p_value = sapply(cor_results, function(x) x$p.value): This line creates a column named "p_value" in the cor_table dataframe. Similar to the previous line, it uses sapply() to iterate over the cor_results list and extract the p-values (p.value) from each cor.test result. The p-values are assigned to the "p_value" column.
+
+
+print(cor_table)
+
+--------------------------------------------
+library(openxlsx)
+
+# Specify the file path for the Excel file
+file_path <- "C:/Users/Sarah/OneDrive - Universidad Icesi (@icesi.edu.co)/Escritorio"
+
+# Write the table to the Excel file
+write.xlsx(cor_table, file_path, rowNames = FALSE)
+
+# Message indicating successful export
+cat("Table exported to Excel:", file_path, "\n")
+---------------------------------------------------
+SPEARMAN CORRELATION TEST NONPARAMETRIC/ BRUCITE
+
+# Convert target_variable to numeric and handle missing values
+target_variable <- as.numeric(as.character(eps$Brucite))
+target_variable <- target_variable[!is.na(target_variable)]
+
+# Convert other_variables to numeric and handle missing values
+other_variables <- eps[, c(118,119,120,122,124)]
+other_variables <- apply(other_variables, 2, function(x) as.numeric(as.character(x)))
+other_variables <- na.omit(other_variables)
+
+# Create an empty table to store the results
+result_table <- data.frame(Variable = colnames(other_variables),
+                           Correlation = numeric(ncol(other_variables)),
+                           P_Value = numeric(ncol(other_variables)),
+                           stringsAsFactors = FALSE)
+
+# Calculate correlations and p-values
+for (i in 1:ncol(other_variables)) {
+  result <- cor.test(target_variable, other_variables[, i], method = "spearman")
+  result_table[i, "Correlation"] <- result$estimate
+  result_table[i, "P_Value"] <- result$p.value
+}
+
+# Print the result table
+print(result_table)
+-------------------------------------------------
+library(openxlsx)
+
+# Specify the file path for the Excel file
+file_path <- "C:/Users/Sarah/OneDrive - Universidad Icesi (@icesi.edu.co)/Escritorio"
+
+# Write the table to the Excel file
+write.xlsx(result_table, file_path, rowNames = FALSE)
+
+# Message indicating successful export
+cat("Table exported to Excel:", file_path, "\n")
+-------------------------------------------------
+ARAGONITE_SPEARMAN
+
+# Convert target_variable to numeric and handle missing values
+target_variable <- as.numeric(as.character(eps$Aragonite))
+target_variable <- target_variable[!is.na(target_variable)]
+
+# Convert other_variables to numeric and handle missing values
+other_variables <- eps[, c(116:125)]
+other_variables <- apply(other_variables, 2, function(x) as.numeric(as.character(x)))
+other_variables <- na.omit(other_variables)
+
+# Create an empty table to store the results
+result_table <- data.frame(Variable = colnames(other_variables),
+                           Correlation = numeric(ncol(other_variables)),
+                           P_Value = numeric(ncol(other_variables)),
+                           stringsAsFactors = FALSE)
+
+# Calculate correlations and p-values
+for (i in 1:ncol(other_variables)) {
+  result <- cor.test(target_variable, other_variables[, i], method = "spearman")
+  result_table[i, "Correlation"] <- result$estimate
+  result_table[i, "P_Value"] <- result$p.value
+}
+
+# Print the result table
+print(result_table)
+
+-------------------
+library(openxlsx)
+
+# Specify the file path for the Excel file
+file_path <- "C:/Users/Sarah/OneDrive - Universidad Icesi (@icesi.edu.co)/Escritorio"
+
+# Write the table to the Excel file
+write.xlsx(result_table, file_path, rowNames = FALSE)
+
+# Message indicating successful export
+cat("Table exported to Excel:", file_path, "\n")
