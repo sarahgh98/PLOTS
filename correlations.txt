@@ -1,7 +1,8 @@
 SHAPIRO FOR INDIVIDUAL VQARIABLE
 View(eps)
 shapiro.test(eps$K07257)
-
+#first change in the code
+#second change in the code 
 ------------------------------------------------------------
 
 SINGLE VARIABLES SPEARMAN
