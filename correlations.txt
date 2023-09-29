@@ -5,6 +5,7 @@ shapiro.test(eps$K07257)
 #second change in the code 
 #new line added to practice git
 #now second change added to practice git
+#third change added to practice but now in github
 ------------------------------------------------------------
 #third change in GitHub 
 SINGLE VARIABLES SPEARMAN
