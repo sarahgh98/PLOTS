@@ -4,7 +4,7 @@ shapiro.test(eps$K07257)
 #first change in the code
 #second change in the code 
 ------------------------------------------------------------
-
+#third change in GitHub 
 SINGLE VARIABLES SPEARMAN
 # Example data
 x <- try$brucite
