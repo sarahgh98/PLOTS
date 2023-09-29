@@ -3,6 +3,7 @@ View(eps)
 shapiro.test(eps$K07257)
 #first change in the code
 #second change in the code 
+#new line added to practice git
 ------------------------------------------------------------
 #third change in GitHub 
 SINGLE VARIABLES SPEARMAN
